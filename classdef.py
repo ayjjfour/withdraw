@@ -10,9 +10,11 @@ class MyHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.links = []
-        self.maps = {}
+        self.maps = {"__VIEWSTATE":"", "__EVENTVALIDATION":""}
         self.flag = False
+        self.pflag = False
         self.moneyflag = False
+        self.pmoneyflag = False
         self.money = -1
         self.index = 0
         
@@ -40,6 +42,11 @@ class MyHTMLParser(HTMLParser):
             self.flag = True
             self.index = self.index + 1
             return
+        
+        if tag == "p":
+            self.pflag = True
+            self.index = self.index + 1
+            return
     
     def handle_data(self,data):
         #��������
@@ -52,14 +59,27 @@ class MyHTMLParser(HTMLParser):
                 self.money = int(float(mydata.encode("utf-8")))
                 self.moneyflag = False
                 #print "money = ", self.money
+                self.flag = False
                 return
-                
-
+            
             if mydata == "现金余额：":
                 #print "label = ", mydata
                 self.moneyflag = True
             #print "td = ", self.index, mydata
             #self.text = data
+            
+        if self.pflag == True:
+            if self.pmoneyflag == True:
+                self.money = int(float(mydata.encode("utf-8")))
+                self.pmoneyflag = False
+                #print "money = ", self.money
+                self.flag = False
+                return
+            
+            if mydata == "现金：":
+                #print "label = ", mydata
+                self.pmoneyflag = True
+            #print "p = ", self.index, mydata
         
 class UserInfo(object):
     def __init__(self):
@@ -158,18 +178,32 @@ class UserInfo(object):
                    "Cache-Control":"no-cache"
                    }
         
-        r = s.post("http://www.sjhy2016.com", headers=headers, data=payload)
+        _pwd_err_VIEWSTATE = "/wEPDwUINzc3NzY4NTYPZBYCAgEPZBYCAgsPDxYCHgRUZXh0BT08c2NyaXB0PmFsZXJ0KCfmgqjnmoTmtojotLnogIVJROWvhueggeS4jeato+ehru+8gScpPC9zY3JpcHQ+ZGQYAQUeX19Db250cm9sc1JlcXVpcmVQb3N0QmFja0tleV9fFgEFB0J1dHRvbjEVlT6Bq1o4H72vcDF8jATgRd6ikDNzQr5cRYRoW3uJKw=="
+        _pwd_err_EVENTVALIDATION = "/wEWBQKU4q/KBwKE6PygBALyveCRDwLy1ffTCgKM54rGBhcz5tXSHx+VSq7eWnbRF8j0okB8QWDCxkYNN/ZwDbgD"
+        _chk_err_VIEWSTATE = "/wEPDwUINzc3NzY4NTYPZBYCAgEPZBYCAgsPDxYCHgRUZXh0BTs8c2NyaXB0PmFsZXJ0KCfmgqjovpPlhaXnmoTpqozor4HnoIHkuI3mraPnoa7vvIEnKTwvc2NyaXB0PmRkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYBBQdCdXR0b24xrZt0kYV0TlSCJbV22ac8OoTPrgn1wI1iFuGoyt8v35U="
+        _chk_err_EVENTVALIDATION = "/wEWBQL9zdrUBAKE6PygBALyveCRDwLy1ffTCgKM54rGBvBLCGpFwL8IKXKP5lVGWe8gbScxXGwRlGE/1ch/xEOO"
         
-        return r.text
+        r = s.post("http://www.sjhy2016.com", headers=headers, data=payload)
+        parser = self._parse_html(r.text)
+        
+        if (parser.maps["__VIEWSTATE"] == _chk_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _chk_err_EVENTVALIDATION):
+            return -2
+        elif (parser.maps["__VIEWSTATE"] == _pwd_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _pwd_err_EVENTVALIDATION):
+            return -1
+        elif parser.money < 100:
+            self.set_leftmoney(8000 + parser.money)
+            return 1
+        else:   # 继续提取现金
+            return 0
 
     def step1_login(self, s, url):
         print "step1_login begin"
         maps = self._fetch_html(s, url)
         self._start_download(1, s)
         maps["verifycode"] = checknum.check_num()
-        htmltext = self._send_login(maps, s)
+        errorcode = self._send_login(maps, s)
         
-        return htmltext
+        return errorcode
     
     def _step2_throw_into_web(self, s, url):
         maps = self._fetch_html(s, url)
@@ -191,32 +225,26 @@ class UserInfo(object):
                    }
         
         r = s.post(url, headers=headers, data=payload)
-        
         parser = self._parse_html(r.text)
-        
-        return parser.maps, parser.money
+        errorcode = 0
+        if parser.money == -1:
+            errorcode = -1
+          
+        return parser.maps, parser.money, errorcode
     
     def step2_get_money(self, s, url):
         print "step2_getmoney begin"
-        maps, money = self._step2_throw_into_web(s, url)
+        maps, money, errorcode = self._step2_throw_into_web(s, url)
         
-        return maps, money
-        """
-        file_object = open("d:\\pic\\xx.html", 'wb')
-        for chunk in r.iter_content():
-            file_object.write(chunk)
-        file_object.close( )
-        print "r.text = Ok" #, r.text 
-        return
-        """
+        return maps, money, errorcode
     
     def _step3_post_fetch_money(self, s, maps, money, url):
         money_int = (money / 100) * 100
-        money_str = str(money_int)
+        money_str = str(money_int  + 20)
         
         if money_int <= 0:
-            self.set_leftmoney(money)
-            return
+            self.set_leftmoney(8000 + money)
+            return 1
         
         #print "_step2_post_fetch_money money_str = ", money_str
         
@@ -244,16 +272,20 @@ class UserInfo(object):
                    }
         
         r = s.post(url, headers=headers, data=payload)
-        #_save_to_file(r, "")
         parser = self._parse_html(r.text)
+        
+        errcode = 0
+        if parser.money >= 100:
+            errcode = -1
+        
         self.set_leftmoney(parser.money)
+        
+        return errcode
         
     def step3_fetch_money(self, s, maps, money, url):
         print "step3_fetch_money begin"
-        self._step3_post_fetch_money(s, maps, money, url)
+        return self._step3_post_fetch_money(s, maps, money, url)
         
-        if self.get_leftmoney() != -1:
-            print "fetch_OK nickname = %s left = %d" % (self.get_nickname(), self.get_leftmoney())
-        else:
-            print "fetch_failed nickname = %s" % self.get_nickname()
+        #return self.get_leftmoney()
+
         
