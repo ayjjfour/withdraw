@@ -185,14 +185,14 @@ class UserInfo(object):
         
         r = s.post("http://www.sjhy2016.com", headers=headers, data=payload)
         parser = self._parse_html(r.text)
+        self.set_leftmoney(parser.money)
         
         if (parser.maps["__VIEWSTATE"] == _chk_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _chk_err_EVENTVALIDATION):
-            return -2
+            return -1002
         elif (parser.maps["__VIEWSTATE"] == _pwd_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _pwd_err_EVENTVALIDATION):
-            return -1
+            return -1001
         elif parser.money < 100:
-            self.set_leftmoney(8000 + parser.money)
-            return 1
+            return 1001
         else:   # 继续提取现金
             return 0
 
@@ -228,7 +228,7 @@ class UserInfo(object):
         parser = self._parse_html(r.text)
         errorcode = 0
         if parser.money == -1:
-            errorcode = -1
+            errorcode = -2001
           
         return parser.maps, parser.money, errorcode
     
@@ -243,8 +243,8 @@ class UserInfo(object):
         money_str = str(money_int  + 20)
         
         if money_int <= 0:
-            self.set_leftmoney(8000 + money)
-            return 1
+            self.set_leftmoney(money)
+            return 3001
         
         #print "_step2_post_fetch_money money_str = ", money_str
         
@@ -276,7 +276,7 @@ class UserInfo(object):
         
         errcode = 0
         if parser.money >= 100:
-            errcode = -1
+            errcode = -3001
         
         self.set_leftmoney(parser.money)
         

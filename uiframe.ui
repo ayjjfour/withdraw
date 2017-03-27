@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>989</width>
+    <height>615</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QTextBrowser" name="m_txt_log">
+   <property name="geometry">
+    <rect>
+     <x>375</x>
+     <y>61</y>
+     <width>611</width>
+     <height>551</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="m_lab_user">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>40</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>用户列表：</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="m_lab_log">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>40</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>运行日志：</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="m_btn_save">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>保存</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="m_btn_delet">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>删除</string>
+   </property>
+  </widget>
+  <widget class="QTableView" name="m_tbl_user">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>61</y>
+     <width>361</width>
+     <height>551</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="m_btn_start">
+   <property name="geometry">
+    <rect>
+     <x>740</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>开始</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="m_btn_reset">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>重置</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>m_btn_reset</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>user_state_reset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>554</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>180</x>
+     <y>37</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_btn_start</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>fetch_money_start()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>789</x>
+     <y>16</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>355</x>
+     <y>15</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_btn_save</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>save_user_info()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>23</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>174</x>
+     <y>8</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_btn_delet</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>delete_user_info()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>224</x>
+     <y>28</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>258</x>
+     <y>45</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>m_tbl_user</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>m_tbl_user</receiver>
+   <slot>edit(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>175</x>
+     <y>317</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>214</x>
+     <y>355</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>user_state_reset()</slot>
+  <slot>fetch_money_start()</slot>
+  <slot>save_user_info()</slot>
+  <slot>delete_user_info()</slot>
+ </slots>
+</ui>
