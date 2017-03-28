@@ -8,6 +8,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import Queue
 import time
+import log
 
 class Run(QThread):
     error_msg = {
@@ -24,18 +25,22 @@ class Run(QThread):
         QThread.__init__(self)
         self.ui = ui
         self.queue = queue
+        self.log = log.Log()
+        
+    def _write_log(self, log, level = 0):
+        strlog = self.log.write(log, level)
+        self.emit(SIGNAL("SIG_add_log(QString)"), QString(strlog))
 
     def release(self):
         self.dbif.close()
 
-    def _routine_run(self, info):
-        s = requests.session()
+    def _update_user_fetch_flag(self, user, flag):
+        update_sql = "update user_info set fetch_flag = '%d' where nickname = '%s'"
+        self.dbif.update_data(update_sql % (flag, user.get_nickname()))
+
+    def _routine_run(self, s, info):
         user = UserInfo()
-        
         user.set_info(info[0], info[1], info[2], info[3])
-        print "\n\nstart to fetch %s's money" % user.get_nickname()
-        
-        update_sql = "update user_info set fetch_flag = '%d' where nickname = '%s'" 
         
         strerr = ""
         errcode = 0
@@ -43,62 +48,74 @@ class Run(QThread):
         while cycle < 1:
             cycle = 1
             #Step1 login
-            errcode = user.step1_login(s, 'http://www.sjhy2016.com')
+            self._write_log(u"用户[%s]开始登录" % info[0])
+            errcode, money = user.step1_login(s, 'http://www.sjhy2016.com')
             if 0 != errcode:
-                strerr = "fetch step1_login[%s] nickname = %s" %(self.error_msg[errcode], user.get_nickname())
-                #self.ui.update("log", strerr)
-                self.dbif.update_data(update_sql % (errcode, user.get_nickname()))
+                strerr = u"用户[%s]登录后，终止提现[现金：%d, 原因：%s]" %(user.get_nickname(), money, self.error_msg[errcode])
                 break
-                
+
             #Step2 Get Current Money
+            self._write_log(u"用户[%s]开始查询现金" % info[0])
             maps, money, errcode = user.step2_get_money(s, 'http://www.sjhy2016.com/client/3login.aspx?url=usergetmoney.aspx')
-            self.dbif.update_data(update_sql % (errcode, user.get_nickname()))
+            self._write_log(u"用户[%s]的现金是：￥%d" % (info[0], money))
             if 0 != errcode:
-                strerr = "fetch step2_get_money[%s] nickname = %s" %(self.error_msg[errcode], user.get_nickname())
-                #self.ui.update("log", strerr)
+                strerr = u"用户[%s]查询结果后，终止提现[原因：%s]" %(user.get_nickname(), money, self.error_msg[errcode])
                 break
-                    
+
             #Step3 Fetch Money
+            self._write_log(u"用户[%s]开始提取现金" % info[0])
             errcode = user.step3_fetch_money(s, maps, money, 'http://www.sjhy2016.com/client/usergetmoney.aspx')
             if 0 != errcode:
-                strerr = "fetch step3_fetch_money[%s] nickname = %s" %(self.error_msg[errcode], user.get_nickname())
-                #self.ui.update("log", strerr)
+                strerr = u"用户[%s]提取现金失败[原因：%s]" %(user.get_nickname(), self.error_msg[errcode])
                 break
-        
+
+        self._update_user_fetch_flag(user, errcode)
         if strerr != "":
-            self.emit(SIGNAL("SIG_add_log(QString)"), QString(strerr))
-            
+            self._write_log(strerr)
+
         info[3] = errcode
         print "emit SIG_update_state"
         self.emit(SIGNAL("SIG_update_state(QString, int)"), QString(info[0]), errcode)
-        #Close session
-        s.close()
-
-    g_info = [["yjj881", "555666", "888999", -1], ["yjj882", "555666", "888999", -1], ["yjj883", "555666", "888999", -1],
-              ["yjj884", "555666", "888999", -1], ["yjj885", "555666", "888999", -1], ["yjj886", "555666", "888999", -1]]
 
     def _create_table(self):
         create_table_sql = """CREATE TABLE IF NOT EXISTS `user_info` (`nickname` VARCHAR(64) NOT NULL,`password` VARCHAR(45) NOT NULL,`secondpwd` VARCHAR(45) NOT NULL,
                             `fetch_date` DATE NULL,`fetch_flag` INT NOT NULL DEFAULT 0,PRIMARY KEY (`nickname`) )"""
         self.dbif.execute_sql(create_table_sql)
 
-    def insert_data(self):
-        insert_sql = ["""insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj881', '555666', '888999', '0')""",
-                     """insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj882', '555666', '888999', '0')""",
-                     """insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj883', '555666', '888999', '0')""",
-                     """insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj884', '555666', '888999', '0')""",
-                     """insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj885', '555666', '888999', '0')""",
-                     """insert into user_info (nickname, password, secondpwd, fetch_flag) values('yjj886', '555666', '888999', '0')"""]
+    def _delete_user_info(self, info):
+        if info == None:
+            strsql = "delete from user_info;"
+        else:
+            strsql = "delete from user_info where nickname = '%s';" % info[0]
+            
+        print "_delete_user_info strsql = ", strsql
+        self.dbif.execute_sql(strsql)
+        self.dbif.commit_routine()
+            
+    def _insert_user_info(self, list_info):
+        insert_sql = []
+        for i in range(len(list_info)):
+            info = list_info[i]
+            strsql = "insert into user_info (nickname, password, secondpwd, fetch_flag) values('%s', '%s', '%s', '%d')" %(info[0], info[1], info[2], info[3])
+            insert_sql.append(strsql)
         
         for i in range(len(insert_sql)):
             self.dbif.insert_data(insert_sql[i])
         
         self.dbif.commit_routine()
 
-    def update_flag(self, flag):
+    def save_user_info(self, list_info):
+        self.dbif.begin_routine()
+        
+        self._delete_user_info(None)
+        self._insert_user_info(list_info)
+
+    def update_user_flag(self, flag):
         update_sql = "update user_info set fetch_flag = %d" % flag
         self.dbif.begin_routine()
+        
         self.dbif.execute_sql(update_sql)
+        
         self.dbif.commit_routine()
 
     def load_user_info(self):
@@ -112,11 +129,23 @@ class Run(QThread):
         print "info = ", info
     
         for i in range(len(info)):
+            self.emit(SIGNAL("SIG_update_state(QString, int)"), QString(info[i][0]), -9999)
+    
+        for i in range(len(info)):
+            if self.thread_stop == True:
+                self._write_log(u"批量作业被中断!")
+                return
+            
             self.dbif.begin_routine()
-            self._routine_run(info[i])
+            s = requests.session()
+            try:
+                self._routine_run(s, info[i])
+            except:
+                self._write_log(u"用户[%s]提现过程发生异常，请稍后再尝试" % info[i][0])
+            s.close()
             self.dbif.commit_routine()
         
-        print "\nFinish!"
+        self._write_log(u"完成一次批量操作!")
         
     def run(self):
         self.dbif = Sqlite3If()
@@ -133,13 +162,16 @@ class Run(QThread):
                 continue
             
             if task[0] == "reset":
-                self.update_flag(-9999)
+                self.update_user_flag(-9999)
             elif task[0] == "start":
                 self.fetch_money_start()
             elif task[0] == "load":
                 print "_Load_data"
                 self.list_info = self.load_user_info()
                 self.emit(SIGNAL("SIG_load_data()"))
+            elif task[0] == "save":
+                print "save = ", task[1]
+                self.save_user_info(task[1])
             elif task[0] == "stop":
                 self.thread_stop = True
             

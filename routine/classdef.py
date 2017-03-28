@@ -187,23 +187,24 @@ class UserInfo(object):
         parser = self._parse_html(r.text)
         self.set_leftmoney(parser.money)
         
+        errcode = 0
         if (parser.maps["__VIEWSTATE"] == _chk_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _chk_err_EVENTVALIDATION):
-            return -1002
+            errcode = -1002
         elif (parser.maps["__VIEWSTATE"] == _pwd_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _pwd_err_EVENTVALIDATION):
-            return -1001
+            errcode = -1001
         elif parser.money < 100:
-            return 1001
-        else:   # 继续提取现金
-            return 0
+            errcode = 1001
+        
+        return errcode, parser.money
 
     def step1_login(self, s, url):
         print "step1_login begin"
         maps = self._fetch_html(s, url)
         self._start_download(1, s)
         maps["verifycode"] = checknum.check_num()
-        errorcode = self._send_login(maps, s)
+        errcode, money = self._send_login(maps, s)
         
-        return errorcode
+        return errcode, money
     
     def _step2_throw_into_web(self, s, url):
         maps = self._fetch_html(s, url)

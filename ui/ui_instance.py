@@ -12,6 +12,9 @@ class UIFrame(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.queue = Queue.Queue(20)
 
+        #设置选择属性
+        self.m_tbl_user.setSelectionBehavior(QAbstractItemView.SelectRows)
+
         #添加表头：
         self.model = QtGui.QStandardItemModel(self.m_tbl_user)
 
@@ -41,30 +44,79 @@ class UIFrame(QDialog, Ui_Dialog):
         
         self._load_user_info()
         
+    def __del__(self):
+        self.queue.put(["stop"], False)
+        self.run.thread_stop = True
+        
     def _load_user_info(self):
-        self.queue.put(["load"])
+        self.queue.put(["load"], False)
 
     def user_state_reset(self):
-        self.queue.put(["reset", -9999])
+        self.queue.put(["reset", -9999], False)
         rowcount = self.model.rowCount()
         for i in range(rowcount):
             self.model.setItem(i, 3, QtGui.QStandardItem(self.run.error_msg[-9999]))
+            self.model.item(i, 3).setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
         return
     
     def fetch_money_start(self):
-        self.queue.put(["start"], block=True, timeout=None)
+        self.queue.put(["start"], block = True, timeout = None)
         return
     
+    def add_user_info(self):
+        list_of_QStandardItem = []
+        list_of_QStandardItem.append(QtGui.QStandardItem(''))
+        list_of_QStandardItem.append(QtGui.QStandardItem('555666'))
+        list_of_QStandardItem.append(QtGui.QStandardItem('888999'))
+        item = QtGui.QStandardItem(self.run.error_msg[-9999])
+        item.setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
+        list_of_QStandardItem.append(item)
+        
+        self.model.appendRow(list_of_QStandardItem)
+    
     def save_user_info(self):
+        #self.queue.put(["save"], block=True, timeout=None)
+        list_info = []
+        local_dicinfo = {}
+        rowcount = self.model.rowCount()
+        for i in range(rowcount):
+            info = []
+            nickname = unicode(self.model.item(i, 0).text(), 'utf-8', 'ignore').strip()
+            passwd = unicode(self.model.item(i, 1).text(), 'utf-8', 'ignore').strip()
+            secondpwd = unicode(self.model.item(i, 2).text(), 'utf-8', 'ignore').strip()
+            if nickname == '':                      #用户名为空
+                QMessageBox.critical(self, "Critical", u'列表中不能存在空的用户名!')
+                return
+            
+            if local_dicinfo.has_key(nickname):      #用户名重复了
+                QMessageBox.critical(self, "Critical", u"用户名[%s]已经存在了!" % nickname)
+                return
+            
+            local_dicinfo[nickname] = i
+            info.append(nickname)
+            info.append(passwd)
+            info.append(secondpwd)
+            info.append(-9999)
+            list_info.append(info)
+            
+        self.dicinfo = local_dicinfo
+        self.queue.put(["save", list_info], block = True, timeout = None)
+                
         return
     
     def delete_user_info(self):
+        
+        index = self.m_tbl_user.selectedIndexes()
+        
+        self.model.beginRemoveRows(index[0], 0, len(index))
+        self.model.endRemoveRows()
+        
         return
     
     ############## slot #############
     def slot_load_data(self):
         list_info = self.run.list_info
-        self.dicinfo = {}
+        self.dicinfo = {}   # key = nickname, value = rownumber
         print "slot_load_data", list_info
         
         for i in range(len(list_info)):
@@ -75,6 +127,10 @@ class UIFrame(QDialog, Ui_Dialog):
                 if j == (len(row) - 1):
                     if self.run.error_msg.has_key(row[j]):
                         self.model.setItem(i,j,QtGui.QStandardItem(self.run.error_msg[row[j]]))
+                        if row[j] < 0:
+                            self.model.item(i, j).setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
+                        else:
+                            self.model.item(i, j).setForeground(QtGui.QBrush(QtGui.QColor(0, 255, 0)))
                     else:
                         row[j] = -9999
                         self.model.setItem(i,j,QtGui.QStandardItem(u"未知"))
@@ -85,6 +141,10 @@ class UIFrame(QDialog, Ui_Dialog):
         index = self.dicinfo[keystr]
         if self.run.error_msg.has_key(state):
             self.model.setItem(index, 3, QtGui.QStandardItem(self.run.error_msg[state]))
+            if state < 0:
+                self.model.item(index, 3).setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
+            else:
+                self.model.item(index, 3).setForeground(QtGui.QBrush(QtGui.QColor(0, 255, 0)))
         else:
             self.model.setItem(index, 3, QtGui.QStandardItem(u"未知"))
                     
