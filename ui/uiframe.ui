@@ -78,7 +78,7 @@
   <widget class="QPushButton" name="m_btn_start">
    <property name="geometry">
     <rect>
-     <x>740</x>
+     <x>650</x>
      <y>10</y>
      <width>75</width>
      <height>23</height>
@@ -124,6 +124,19 @@
     <string>添加</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="m_btn_stop">
+   <property name="geometry">
+    <rect>
+     <x>770</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>停止</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
@@ -150,7 +163,7 @@
    <slot>fetch_money_start()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>789</x>
+     <x>699</x>
      <y>16</y>
     </hint>
     <hint type="destinationlabel">
@@ -192,22 +205,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>m_tbl_user</sender>
-   <signal>doubleClicked(QModelIndex)</signal>
-   <receiver>m_tbl_user</receiver>
-   <slot>edit(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>175</x>
-     <y>317</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>214</x>
-     <y>355</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>m_btn_add</sender>
    <signal>clicked()</signal>
    <receiver>Dialog</receiver>
@@ -223,6 +220,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>m_btn_stop</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>Dialog</receiver>
+   <slot>fetch_money_stop()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>805</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>866</x>
+     <y>23</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>user_state_reset()</slot>
@@ -230,5 +243,6 @@
   <slot>save_user_info()</slot>
   <slot>delete_user_info()</slot>
   <slot>add_user_info()</slot>
+  <slot>fetch_money_stop()</slot>
  </slots>
 </ui>

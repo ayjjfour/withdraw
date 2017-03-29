@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiframe.ui'
 #
-# Created: Tue Mar 28 16:54:47 2017
+# Created: Wed Mar 29 12:24:56 2017
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -43,7 +43,7 @@ class Ui_Dialog(object):
         self.m_tbl_user.setGeometry(QtCore.QRect(5, 61, 361, 551))
         self.m_tbl_user.setObjectName(_fromUtf8("m_tbl_user"))
         self.m_btn_start = QtGui.QPushButton(Dialog)
-        self.m_btn_start.setGeometry(QtCore.QRect(740, 10, 75, 23))
+        self.m_btn_start.setGeometry(QtCore.QRect(650, 10, 75, 23))
         self.m_btn_start.setObjectName(_fromUtf8("m_btn_start"))
         self.m_btn_reset = QtGui.QPushButton(Dialog)
         self.m_btn_reset.setGeometry(QtCore.QRect(530, 10, 75, 23))
@@ -54,14 +54,17 @@ class Ui_Dialog(object):
         self.m_btn_add = QtGui.QPushButton(Dialog)
         self.m_btn_add.setGeometry(QtCore.QRect(30, 10, 75, 23))
         self.m_btn_add.setObjectName(_fromUtf8("m_btn_add"))
+        self.m_btn_stop = QtGui.QPushButton(Dialog)
+        self.m_btn_stop.setGeometry(QtCore.QRect(770, 10, 75, 23))
+        self.m_btn_stop.setObjectName(_fromUtf8("m_btn_stop"))
 
         self.retranslateUi(Dialog)
         QtCore.QObject.connect(self.m_btn_reset, QtCore.SIGNAL(_fromUtf8("clicked()")), Dialog.user_state_reset)
         QtCore.QObject.connect(self.m_btn_start, QtCore.SIGNAL(_fromUtf8("clicked()")), Dialog.fetch_money_start)
         QtCore.QObject.connect(self.m_btn_save, QtCore.SIGNAL(_fromUtf8("clicked()")), Dialog.save_user_info)
         QtCore.QObject.connect(self.m_btn_delet, QtCore.SIGNAL(_fromUtf8("clicked()")), Dialog.delete_user_info)
-        QtCore.QObject.connect(self.m_tbl_user, QtCore.SIGNAL(_fromUtf8("doubleClicked(QModelIndex)")), self.m_tbl_user.edit)
         QtCore.QObject.connect(self.m_btn_add, QtCore.SIGNAL(_fromUtf8("clicked()")), Dialog.add_user_info)
+        QtCore.QObject.connect(self.m_btn_stop, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), Dialog.fetch_money_stop)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -73,4 +76,5 @@ class Ui_Dialog(object):
         self.m_btn_start.setText(_translate("Dialog", "开始", None))
         self.m_btn_reset.setText(_translate("Dialog", "重置", None))
         self.m_btn_add.setText(_translate("Dialog", "添加", None))
+        self.m_btn_stop.setText(_translate("Dialog", "停止", None))
 

@@ -124,6 +124,7 @@ class Run(QThread):
         return info
 
     def fetch_money_start(self):
+        self.routine_stop = False
         strsql = "select nickname, password, secondpwd, -1 from user_info where fetch_flag < 0"
         info = self.dbif.select_data(strsql)
         print "info = ", info
@@ -132,7 +133,7 @@ class Run(QThread):
             self.emit(SIGNAL("SIG_update_state(QString, int)"), QString(info[i][0]), -9999)
     
         for i in range(len(info)):
-            if self.thread_stop == True:
+            if self.thread_stop == True or self.routine_stop == True:
                 self._write_log(u"批量作业被中断!")
                 return
             
@@ -145,6 +146,7 @@ class Run(QThread):
             s.close()
             self.dbif.commit_routine()
         
+        self.routine_stop = True
         self._write_log(u"完成一次批量操作!")
         
     def run(self):
@@ -165,6 +167,7 @@ class Run(QThread):
                 self.update_user_flag(-9999)
             elif task[0] == "start":
                 self.fetch_money_start()
+                self.emit(SIGNAL('SIG_set_button_enable(bool)'), True)
             elif task[0] == "load":
                 print "_Load_data"
                 self.list_info = self.load_user_info()
