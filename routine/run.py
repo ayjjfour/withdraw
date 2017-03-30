@@ -80,6 +80,8 @@ class Run(QThread):
         info[3] = errcode
         print "emit SIG_update_state"
         self.emit(SIGNAL("SIG_update_state(QString, int)"), QString(info[0]), errcode)
+        
+        return errcode
 
     def _create_table(self):
         create_table_sql = """CREATE TABLE IF NOT EXISTS `user_info` (`nickname` VARCHAR(64) NOT NULL,`password` VARCHAR(45) NOT NULL,`secondpwd` VARCHAR(45) NOT NULL,
@@ -134,17 +136,38 @@ class Run(QThread):
         print "info = ", info
     
         for i in range(len(info)):
-            self.emit(SIGNAL("SIG_update_state(QString, int)"), QString(info[i][0]), -9999)
+            (SIGNAL("SIG_update_state(QString, int)"), QString(info[i][0]), -9999)
     
-        for i in range(len(info)):
-            if self.thread_stop == True or self.routine_stop == True:
-                self._write_log(u"批量作业被中断!")
-                return
-            self.dbif.begin_routine()
-            s = requests.session()
-            self._routine_run(s, info[i])
-            s.close()
-            self.dbif.commit_routine()
+        tryagain = 1
+        while tryagain != 0:
+            tryagain = 0
+
+            for i in range(len(info)):
+                    
+                if info[i][3] >= 0:
+                    continue
+                    
+                if self.thread_stop == True or self.routine_stop == True:
+                    self._write_log(u"批量作业被中断!")
+                    return
+                self.dbif.begin_routine()
+                s = requests.session()
+                    
+                errcode = 0
+                try:
+                    errcode = self._routine_run(s, info[i])
+                except BaseException:
+                    msg = traceback.format_exc()
+                    self._write_log(msg)
+                    self._write_log(u"提现过程发生异常，请查看日志")
+                    info[i][3] = -9999
+                    errcode = -9999
+                        
+                s.close()
+                self.dbif.commit_routine()
+                    
+                if errcode < 0:
+                    tryagain = 1    
         
         self.routine_stop = True
         self._write_log(u"完成一次批量操作!")
@@ -166,13 +189,7 @@ class Run(QThread):
             if task[0] == "reset":
                 self.update_user_flag(-9999)
             elif task[0] == "start":
-                try:
-                    self.fetch_money_start()
-                except BaseException:
-                    msg = traceback.format_exc() # 方式1
-                    self._write_log(msg)  
-                    self._write_log(u"提现过程发生异常，请查看日志")
-                
+                self.fetch_money_start()
                 self.emit(SIGNAL('SIG_set_button_enable(bool)'), True)
             elif task[0] == "load":
                 print "_Load_data"
