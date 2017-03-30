@@ -5,6 +5,7 @@ import os
 from svmutil import *
 from PIL import Image
 
+check_path = os.getcwd()
 
 def get_bin_table():
     threshold = 150  
@@ -162,18 +163,18 @@ def open_img_01(img_path):
     out = imgry.point(table, '1')
     return out
    
-def Change_gray(count):
+def change_gray(count):
     #print "start gray"
     j = 0
     for i in range(count):
-        img_path = 'd:\pic\createImg_%d.jpg' %i
-        save_path = 'd:\pic\createImg2_%d.jpg' %i
+        img_path = check_path + '/pic/createImg_%d.jpg' %i
+        save_path = check_path + '/pic/createImg2_%d.jpg' %i
         out = open_img_01(img_path)
         
         fliter_points(out)
         list_img = get_crop_imgs(out)
         for im in range(len(list_img)):
-            list_img[im].save('d:\\pic\\test\\%d.jpg' %j)
+            list_img[im].save(check_path + '/pic/test/%d.jpg' %j)
             j += 1
             
         out.save(save_path)
@@ -183,9 +184,9 @@ def Change_gray(count):
         
     return
     
-def Create_test_feature(count):
-    list_test = build_feature('d:\\pic\\test')
-    f = open('d:\\pic\\last_test_pix_xy_new.txt', 'w+')
+def create_test_feature(count):
+    list_test = build_feature(check_path + '/pic/test')
+    f = open(check_path + '/pic/last_test_pix_xy_new.txt', 'w+')
     
     line_size = len(list_test)
     for line in range(line_size):
@@ -239,16 +240,16 @@ def build_feature(rootdir):
 def create_feature_txt():
     """
     for i in range(256):
-        im = Image.open('d:\pic\createImg2_%d.jpg' %i)
+        im = Image.open(check_path + '/pic/createImg2_%d.jpg' %i)
         imgry = im.convert('L')
         text = pytesseract.image_to_string(imgry)
         print "text(%d) =" %i, text
     return
     """
     
-    f = open('d:\\pic\\train_pix_feature_xy.txt', 'w+')
+    f = open(check_path + '/svm/train_pix_feature_xy.txt', 'w+')
     for i in range(10):
-        rootdir = 'd:\pic\\nums\%d' %i
+        rootdir = check_path + '/pic/nums/%d' % i
         pixel_cnt_list = build_feature(rootdir)
         line_size = len(pixel_cnt_list)
         for line in range(line_size):
@@ -264,16 +265,16 @@ def train_svm_model():
     ѵ��������model�ļ�
     :return:
     """
-    y, x = svm_read_problem('d:\\pic\\train_pix_feature_xy.txt')
+    y, x = svm_read_problem(check_path + '/svm/train_pix_feature_xy.txt')
     model = svm_train(y, x)
-    svm_save_model('d:\\pic\\aa.model', model)
+    svm_save_model(check_path + '/svm/svm.model', model)
 
 def svm_model_test(model):
     """
     ʹ�ò��Լ�����ģ��
     :return:
     """
-    yt, xt = svm_read_problem('d:\\pic\\last_test_pix_xy_new.txt')
+    yt, xt = svm_read_problem(check_path + '/pic/last_test_pix_xy_new.txt')
     #p_lab, p_acc, p_val = svm_predict(yt, xt, model)#p_label��Ϊʶ��Ľ��
     p_lab, _, _ = svm_predict(yt, xt, model)
     verifycode = "%(n1)d%(n2)d%(n3)d%(n4)d" % {"n1":p_lab[0], "n2":p_lab[1], "n3":p_lab[2], "n4":p_lab[3]}
@@ -289,9 +290,9 @@ def svm_model_test(model):
     """
 
 def check_num():
-    model = svm_load_model('d:\\pic\\aa.model')
-    Change_gray(1)
-    Create_test_feature(1)
+    model = svm_load_model(check_path + '/svm/svm.model')
+    change_gray(1)
+    create_test_feature(1)
     verifycode = svm_model_test(model)
     
     return verifycode

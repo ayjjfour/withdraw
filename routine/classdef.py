@@ -3,6 +3,7 @@
 from HTMLParser import HTMLParser
 import urllib
 import requests
+import os
 
 import checknum
 
@@ -87,6 +88,7 @@ class UserInfo(object):
         self.password = ""
         self.secondpwd = ""
         self.leftmoney = -1
+        self.path = os.getcwd()
     
     def set_info(self, nickname, password, secondpwd, leftmoney):
         self.set_nickname(nickname)
@@ -122,22 +124,19 @@ class UserInfo(object):
         if htmlfile != "":
             filepath = htmlfile
         else:
-            filepath = "d:\\pic\\xx.html"
+            filepath = self.path + "/pic/xx.html"
     
         file_object = open(filepath, 'wb')
         for chunk in r.iter_content():
             file_object.write(chunk)
         file_object.close( )
-        #print "_debug_for_post = Ok" #, r.text 
    
-    def _fetch_html(self, ss, url):
+    def _fetch_html(self, s, url):
+        r = s.get(url)
+        
         parser = MyHTMLParser()
-        
-        r = ss.get(url)
-        #print "r.text = ", r.text
-        
         parser.feed(r.text)
-        #print "parser.map = ", parser.map
+
         return parser.maps
     
     def _parse_html(self, strhtml):
@@ -146,16 +145,13 @@ class UserInfo(object):
         
         return parser
         
-    def _start_download(self, count, ss):
+    def _start_download(self, count, s):
         imgurl = 'http://www.sjhy2016.com/createImg.aspx'
         #print 'Downloading...'  
         for i in range(count):
-            savepath = 'd:\pic\createImg_%d.jpg' %i
-            r = ss.get(imgurl)
+            savepath = self.path + '/pic/createImg_%d.jpg' %i
+            r = s.get(imgurl)
             self._save_to_file(r, savepath)
-            #print "ok download"
-            #print "r.text = ", r.text
-            
             #urllib.urlretrieve(imgurl, savepath)
         
         return
@@ -200,6 +196,7 @@ class UserInfo(object):
     def step1_login(self, s, url):
         print "step1_login begin"
         maps = self._fetch_html(s, url)
+        print "step1_login begin self._fetch_html = ", url
         self._start_download(1, s)
         maps["verifycode"] = checknum.check_num()
         errcode, money = self._send_login(maps, s)
@@ -247,7 +244,7 @@ class UserInfo(object):
             self.set_leftmoney(money)
             return 3001
         
-        #print "_step2_post_fetch_money money_str = ", money_str
+        #print "_step3_post_fetch_money money_str = ", money_str
         
         maps["__EVENTTARGET"] = ""
         maps["__EVENTARGUMENT"] = ""
@@ -288,5 +285,3 @@ class UserInfo(object):
         return self._step3_post_fetch_money(s, maps, money, url)
         
         #return self.get_leftmoney()
-
-        

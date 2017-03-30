@@ -15,6 +15,7 @@ class Log(object):
     def _openfile(self):
         path = os.getcwd()
         path = path + "/log/"
+        print "path = ", path
         if not os.path.exists(path):
             os.makedirs(path)
             

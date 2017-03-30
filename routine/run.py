@@ -6,9 +6,11 @@ from classdef import *
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+import traceback
 import Queue
 import time
 import log
+import os
 
 class Run(QThread):
     error_msg = {
@@ -26,6 +28,7 @@ class Run(QThread):
         self.ui = ui
         self.queue = queue
         self.log = log.Log()
+        self.path = os.getcwd()
         
     def _write_log(self, log, level = 0):
         strlog = self.log.write(log, level)
@@ -125,7 +128,7 @@ class Run(QThread):
 
     def fetch_money_start(self):
         self.routine_stop = False
-        strsql = "select nickname, password, secondpwd, -1 from user_info where fetch_flag < 0"
+        strsql = "select nickname, password, secondpwd, fetch_flag from user_info where fetch_flag < 0"
         info = self.dbif.select_data(strsql)
         print "info = ", info
     
@@ -136,13 +139,9 @@ class Run(QThread):
             if self.thread_stop == True or self.routine_stop == True:
                 self._write_log(u"批量作业被中断!")
                 return
-            
             self.dbif.begin_routine()
             s = requests.session()
-            try:
-                self._routine_run(s, info[i])
-            except:
-                self._write_log(u"用户[%s]提现过程发生异常，请稍后再尝试" % info[i][0])
+            self._routine_run(s, info[i])
             s.close()
             self.dbif.commit_routine()
         
@@ -151,7 +150,7 @@ class Run(QThread):
         
     def run(self):
         self.dbif = Sqlite3If()
-        self.dbif.connect('withdraw.db')
+        self.dbif.connect(self.path + '/db/withdraw.db')
         self.thread_stop = False
         #创建表
         self._create_table()
@@ -166,7 +165,13 @@ class Run(QThread):
             if task[0] == "reset":
                 self.update_user_flag(-9999)
             elif task[0] == "start":
-                self.fetch_money_start()
+                try:
+                    self.fetch_money_start()
+                except BaseException:
+                    msg = traceback.format_exc() # 方式1
+                    self._write_log(msg)  
+                    self._write_log(u"提现过程发生异常，请查看日志")
+                
                 self.emit(SIGNAL('SIG_set_button_enable(bool)'), True)
             elif task[0] == "load":
                 print "_Load_data"
