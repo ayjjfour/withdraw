@@ -238,11 +238,11 @@ class UserInfo(object):
     
     def _step3_post_fetch_money(self, s, maps, money, url):
         money_int = (money / 100) * 100
-        money_str = str(money_int  + 20)
+        money_str = str(money_int)
         
         if money_int <= 0:
             self.set_leftmoney(money)
-            return 3001
+            return 3001, money_str
         
         #print "_step3_post_fetch_money money_str = ", money_str
         
@@ -257,7 +257,7 @@ class UserInfo(object):
         maps["ctl00$ContentPlaceHolder1$HidPagesize"] = "15"
         maps["ctl00$ContentPlaceHolder1$HidListcount"] = "28"
         maps["ctl00$ContentPlaceHolder1$HidCondition"] = ""
-        #print "_step2_post_fetch_money maps = ", maps
+        #print "_step3_post_fetch_money maps = ", maps
         
         payload = urllib.urlencode(maps)
                                     
@@ -278,7 +278,7 @@ class UserInfo(object):
         
         self.set_leftmoney(parser.money)
         
-        return errcode
+        return errcode, money_str
         
     def step3_fetch_money(self, s, maps, money, url):
         print "step3_fetch_money begin"

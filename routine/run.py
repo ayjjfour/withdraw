@@ -67,10 +67,11 @@ class Run(QThread):
 
             #Step3 Fetch Money
             self._write_log(u"用户[%s]开始提取现金" % info[0])
-            errcode = user.step3_fetch_money(s, maps, money, 'http://www.sjhy2016.com/client/usergetmoney.aspx')
+            errcode, money = user.step3_fetch_money(s, maps, money, 'http://www.sjhy2016.com/client/usergetmoney.aspx')
             if 0 != errcode:
-                strerr = u"用户[%s]提取现金失败[原因：%s]" %(user.get_nickname(), self.error_msg[errcode])
+                strerr = u"用户[%s]提取现金[%s]失败[原因：%s]" %(user.get_nickname(), money, self.error_msg[errcode])
                 break
+            self._write_log(u"用户[%s]提取现金[%s]成功" %(user.get_nickname(), money))
 
         self._update_user_fetch_flag(user, errcode)
         if strerr != "":

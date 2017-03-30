@@ -14,6 +14,9 @@ class UIFrame(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.queue = Queue.Queue(20)
         
+        self.setWindowFlags(QtCore.Qt.Window)
+        self.setFixedSize(self.width(), self.height())
+        
         #设置窗口标题
         self.setWindowTitle(u"现金提取系统  %s" % version)
 
