@@ -50,7 +50,8 @@ class UIFrame(QDialog, Ui_Dialog):
         self.connect(self.run, SIGNAL("SIG_update_state(QString, int)"), self.slot_update_state)
         self.connect(self.run, SIGNAL("SIG_add_log(QString)"), self.slot_add_log)
         self.connect(self.run, SIGNAL("SIG_set_button_enable(bool)"), self.slot_set_button_enable)
-        
+        self.connect(self.m_tbl_user, SIGNAL("doubleClicked(QModelIndex)"), self.edit_table_item)
+                
         self.run.start()
         
         self._load_user_info()
@@ -75,6 +76,10 @@ class UIFrame(QDialog, Ui_Dialog):
         
     def _load_user_info(self):
         self.queue.put(["load"], False)
+        
+    def edit_table_item(self):
+        self.m_btn_reset.setEnabled(False)
+        self.m_btn_start.setEnabled(False)
 
     def user_state_reset(self):
         self.queue.put(["reset", -9999], False)
