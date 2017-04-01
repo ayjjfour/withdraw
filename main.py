@@ -6,8 +6,7 @@ import os
 
 g_path = ["db",
           "svm",
-          "pic",
-          "pic/test"]
+          "pic"]
 
 def create_dirs():
     for i in range(len(g_path)):

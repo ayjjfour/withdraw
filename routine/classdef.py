@@ -89,6 +89,7 @@ class UserInfo(object):
         self.secondpwd = ""
         self.leftmoney = -1
         self.path = os.getcwd()
+        self.check = checknum.CheckNum(self.path + '/svm/svm.model')
     
     def set_info(self, nickname, password, secondpwd, leftmoney):
         self.set_nickname(nickname)
@@ -154,7 +155,7 @@ class UserInfo(object):
             self._save_to_file(r, savepath)
             #urllib.urlretrieve(imgurl, savepath)
         
-        return
+        return savepath
 
     def _send_login(self, maps, s):
         maps["nickname"] = self.get_nickname()
@@ -188,6 +189,8 @@ class UserInfo(object):
             errcode = -1002
         elif (parser.maps["__VIEWSTATE"] == _pwd_err_VIEWSTATE) and (parser.maps["__EVENTVALIDATION"] == _pwd_err_EVENTVALIDATION):
             errcode = -1001
+        elif parser.money == -1:
+            errcode = 1002
         elif parser.money < 100:
             errcode = 1001
         
@@ -197,8 +200,9 @@ class UserInfo(object):
         print "step1_login begin"
         maps = self._fetch_html(s, url)
         print "step1_login begin self._fetch_html = ", url
-        self._start_download(1, s)
-        maps["verifycode"] = checknum.check_num()
+        imgfile = self._start_download(1, s)
+        maps["verifycode"] = self.check.check_num(imgfile)
+        print "verifycode = ", maps["verifycode"]
         errcode, money = self._send_login(maps, s)
         
         return errcode, money

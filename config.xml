@@ -1,0 +1,10 @@
+<cfg:root xmlns:cfg="http://www.w3school.com.cn/config">
+	<cfg:workpath>d:\withdraw</cfg:workpath>
+	<cfg:db>
+		<cfg:path>db<.cfg:path>
+		<cfg:file>withdraw.db</cfg:file>
+	</cfg:db>
+	<cfg:pic>
+		<cfg:path>pic</cfg:path>
+	</cfg:pic>
+</cfg:root>
