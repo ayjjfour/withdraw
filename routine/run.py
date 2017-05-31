@@ -15,13 +15,13 @@ import os
 class Run(QThread):
     error_msg = {
             -9999:  u"未执行",
+            -2001:  u"二级密码错误",
+            -3001:  u"提取金额不正确", 
             -1002:  u"校验码错误",
             -1001:  u"密码错误", 
             0:      u"完成", 
             1001:   u"已经提取完毕",
             1002:   u"公司正在处理业务，请稍后再试",
-            -2001:  u"二级密码错误",
-            -3001:  u"提取金额不正确", 
             3001:   u"已经提取完毕"}
 
     def __init__(self, ui, queue):
@@ -201,6 +201,3 @@ class Run(QThread):
                 self.save_user_info(task[1])
             elif task[0] == "stop":
                 self.thread_stop = True
-            
-            
-                
